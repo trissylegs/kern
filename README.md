@@ -8,9 +8,9 @@ http://os.phil-opp.com/
 
 Due to the fact that saving SIMD registers takes a FXSAVE instruction we disable
 SIMD and floating point (Sys-V abi needs SIMD for float args/return)
-
-So you will need to specially compile a patched verion of libcore for
+you will need to specially compile a patched verion of libcore for
 x86-unknown-none-gnu.
+ (See bellow for a link)
 
 ## Bugs:
 
