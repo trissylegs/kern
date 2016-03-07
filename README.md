@@ -6,29 +6,15 @@ http://os.phil-opp.com/
 
 ## DIY
 
-Patch libcore. You need to patch libcore with the patch found in
-`./libcore`
-and compile it with x86_64-unknown-none-gnu and install that.
-This is so we can disable floating point with
-`--cfg disable_float`
+Due to the fact that saving SIMD registers takes a FXSAVE instruction we disable
+SIMD and floating point (Sys-V abi needs SIMD for float args/return)
 
-One way you might do this is (assuming you're using multirust)
+So you will need to specially compile a patched verion of libcore for
+x86-unknown-none-gnu.
 
-```sh
-target=x86_64-unknown-none-gnu
-  
-cd libcore
-wget $rustc_nightly_url
-tar -xvf rustc-nightly-src
-cp rustc-nightly-src/src/libcore libcore
-patch -p0 < libcore_nofp.patch
-cd ..
-target=x86_64-unknown-none-gnu
-rustc --target $(target) -Z no-landing-pads                                 \
-      --cfg disable-float                                                   \
-      --out-dir ~/.multirust/toolchains/nightly/lib/rustlib/$(target)/lib   \
-      libcore/libcore/lib.rs
-```
+## Bugs:
+
+* Triple faults into a reboot loop (current bug)
 
 ## Current features
 
@@ -39,19 +25,19 @@ rustc --target $(target) -Z no-landing-pads                                 \
 * Frame allocation. (no deallocation)
 * The current page table is paged into the last 512 GiB of address space
 using recursive mapping.
-(There is still ~255 TiB of address space left so don't panic.)
-* Memory below 1GiB (0x40000000) is mapped 1 to 1 to its hardward address.
-(Identity mapping)
+* The kernel and Mutliboot data is mapped appropriately. (Mulitboot is
+read only and Kernel is according to ELF info)
 
 ## Planned features
 
 * Interrupts
 * Ports
 * Frame deallocation.
-* Page allocation/dealloction (currently is BYO pages)
-* Make the kernel mapping read-only. 
-* Remove the identity mapping
+* Page allocation/dealloction (currently is pick your own pages)
 
+## In the long term
+
+* Useful things an OS should have
 
 ## Boot Errors / Requirements
 
@@ -68,9 +54,13 @@ in assembly and keeping the assembly short is easier.
 ## x86_64-unknown-none-gnu
 
 The ABI is defined in `x86_64-unknown-none-gnu.json`. This files
-disables floating pointer registers. The "red zone" so that interrupts
+disables floating pointer registers and the "red zone" so that interrupts
 can be handled safely and efficiently.
 
-It was written by stolen from:
+It was stolen from:
 http://www.randomhacks.net/2015/11/11/bare-metal-rust-custom-target-kernel-space/
 on 2016-01-08.  So thanks to Eric Kidd for that file.
+
+(This also gives info on how to recompile libcore)
+
+
